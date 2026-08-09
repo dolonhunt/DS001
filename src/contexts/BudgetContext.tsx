@@ -31,7 +31,7 @@ interface BudgetContextType {
   setupHousehold: (name: string) => Promise<void>;
 }
 
-const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
+const BudgetContext = createContext<BudgetContextType>({} as BudgetContextType);
 
 export function useBudget() {
   const context = useContext(BudgetContext);
