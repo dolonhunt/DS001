@@ -43,21 +43,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function createUserProfile(user: User, displayName?: string) {
-    const db = getFirebaseDb();
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        uid: user.uid,
-        email: user.email,
-        displayName: displayName || user.displayName || user.email?.split('@')[0],
-        photoURL: user.photoURL || null,
-        householdId: null,
-        createdAt: serverTimestamp(),
-      });
+    try {
+      const db = getFirebaseDb();
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: displayName || user.displayName || user.email?.split('@')[0],
+          photoURL: user.photoURL || null,
+          householdId: null,
+          createdAt: serverTimestamp(),
+        });
+      }
+      const updated = await getDoc(userRef);
+      setUserProfile(updated.data() as UserProfile);
+    } catch (err) {
+      console.error('createUserProfile error:', err);
+      // Don't block auth flow on Firestore errors
     }
-    const updated = await getDoc(userRef);
-    setUserProfile(updated.data() as UserProfile);
   }
 
   async function signIn(email: string, password: string) {
@@ -86,13 +91,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Only run in browser environment
     if (typeof window === 'undefined') {
       setLoading(false);
       return;
     }
+
+    // Safety timeout - never block the app for more than 5 seconds
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      clearTimeout(timeout);
       setCurrentUser(user);
       if (user) {
         await createUserProfile(user);
@@ -101,7 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
 
   const value: AuthContextType = {
@@ -117,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
