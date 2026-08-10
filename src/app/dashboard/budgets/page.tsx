@@ -22,7 +22,8 @@ interface Budget {
 }
 
 export default function BudgetsPage() {
-  const { user, householdId } = useAuth();
+  const { currentUser, userProfile } = useAuth();
+  const householdId = userProfile?.householdId;
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -44,7 +45,7 @@ export default function BudgetsPage() {
     setLoading(true);
     try {
       const q = query(
-        collection(db!, 'budgets'),
+        collection(db, 'budgets'),
         where('householdId', '==', householdId)
       );
       const snap = await getDocs(q);
@@ -62,13 +63,13 @@ export default function BudgetsPage() {
     if (!category.trim() || !amount || !householdId) return;
     setSaving(true);
     try {
-      await addDoc(collection(db!, 'budgets'), {
+      await addDoc(collection(db, 'budgets'), {
         category: category.trim(),
         amount: parseFloat(amount),
         spent: 0,
         month,
         householdId,
-        createdBy: user?.uid,
+        createdBy: currentUser?.uid,
         createdAt: new Date(),
       });
       setCategory('');
@@ -85,7 +86,7 @@ export default function BudgetsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this budget?')) return;
     try {
-      await deleteDoc(doc(db!, 'budgets', id));
+      await deleteDoc(doc(db, 'budgets', id));
       setBudgets((prev) => prev.filter((b) => b.id !== id));
     } catch (e) {
       console.error(e);
