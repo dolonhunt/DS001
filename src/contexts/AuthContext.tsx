@@ -13,7 +13,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase';
 import { UserProfile } from '@/types';
 
 interface AuthContextType {
@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function createUserProfile(user: User, displayName?: string) {
+    const db = getFirebaseDb();
     const userRef = doc(db, 'users', user.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -60,31 +61,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signIn(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
   }
 
   async function signUp(email: string, password: string, displayName: string) {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
+    const result = await createUserWithEmailAndPassword(getFirebaseAuth(), email, password);
     await updateProfile(result.user, { displayName });
     await createUserProfile(result.user, displayName);
   }
 
   async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(getFirebaseAuth(), provider);
     await createUserProfile(result.user);
   }
 
   async function logout() {
-    await signOut(auth);
+    await signOut(getFirebaseAuth());
     setUserProfile(null);
   }
 
   async function resetPassword(email: string) {
-    await sendPasswordResetEmail(auth, email);
+    await sendPasswordResetEmail(getFirebaseAuth(), email);
   }
 
   useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+    const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
