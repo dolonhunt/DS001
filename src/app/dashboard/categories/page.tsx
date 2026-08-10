@@ -26,7 +26,8 @@ const DEFAULT_COLORS = [
 ];
 
 export default function CategoriesPage() {
-  const { user, householdId } = useAuth();
+  const { currentUser, userProfile } = useAuth();
+  const householdId = userProfile?.householdId;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -45,7 +46,7 @@ export default function CategoriesPage() {
     setLoading(true);
     try {
       const q = query(
-        collection(db!, 'categories'),
+        collection(db, 'categories'),
         where('householdId', '==', householdId)
       );
       const snap = await getDocs(q);
@@ -63,12 +64,12 @@ export default function CategoriesPage() {
     if (!name.trim() || !householdId) return;
     setSaving(true);
     try {
-      await addDoc(collection(db!, 'categories'), {
+      await addDoc(collection(db, 'categories'), {
         name: name.trim(),
         type,
         color,
         householdId,
-        createdBy: user?.uid,
+        createdBy: currentUser?.uid,
         createdAt: new Date(),
       });
       setName('');
@@ -86,7 +87,7 @@ export default function CategoriesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this category?')) return;
     try {
-      await deleteDoc(doc(db!, 'categories', id));
+      await deleteDoc(doc(db, 'categories', id));
       setCategories((prev) => prev.filter((c) => c.id !== id));
     } catch (e) {
       console.error(e);
