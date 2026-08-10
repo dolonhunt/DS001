@@ -8,8 +8,9 @@ import { updateProfile } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function SettingsPage() {
-  const { user, householdId } = useAuth();
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const { currentUser, userProfile } = useAuth();
+  const householdId = userProfile?.householdId;
+  const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
   const [householdName, setHouseholdName] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -38,7 +39,7 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage('');
     try {
-      await updateDoc(doc(db!, 'households', householdId), {
+      await updateDoc(doc(db, 'households', householdId), {
         name: householdName.trim(),
       });
       setMessage('Household name updated!');
@@ -67,15 +68,19 @@ export default function SettingsPage() {
         <div className="space-y-2 text-sm text-gray-600 mb-4">
           <div className="flex justify-between">
             <span className="text-gray-500">Email</span>
-            <span>{user?.email}</span>
+            <span>{currentUser?.email}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Display Name</span>
+            <span>{currentUser?.displayName || userProfile?.displayName || 'Not set'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">User ID</span>
-            <span className="font-mono text-xs">{user?.uid?.substring(0, 16)}...</span>
+            <span className="font-mono text-xs">{currentUser?.uid?.substring(0, 16)}...</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Household ID</span>
-            <span className="font-mono text-xs">{householdId?.substring(0, 16)}...</span>
+            <span className="font-mono text-xs">{householdId ? householdId.substring(0, 16) + '...' : 'Not set'}</span>
           </div>
         </div>
       </div>
