@@ -22,7 +22,7 @@ interface Budget {
 }
 
 export default function BudgetsPage() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, loading: authLoading } = useAuth();
   const householdId = userProfile?.householdId;
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +36,13 @@ export default function BudgetsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!householdId) return;
+    if (authLoading) return;
+    if (!householdId) {
+      setLoading(false);
+      return;
+    }
     fetchBudgets();
-  }, [householdId]);
+  }, [householdId, authLoading]);
 
   const fetchBudgets = async () => {
     if (!householdId) return;
