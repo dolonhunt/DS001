@@ -26,7 +26,7 @@ const DEFAULT_COLORS = [
 ];
 
 export default function CategoriesPage() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, loading: authLoading } = useAuth();
   const householdId = userProfile?.householdId;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,9 +37,13 @@ export default function CategoriesPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!householdId) return;
+    if (authLoading) return;
+    if (!householdId) {
+      setLoading(false);
+      return;
+    }
     fetchCategories();
-  }, [householdId]);
+  }, [householdId, authLoading]);
 
   const fetchCategories = async () => {
     if (!householdId) return;
