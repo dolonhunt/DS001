@@ -1,6 +1,6 @@
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,18 +11,50 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Always initialize Firebase (works on both client and server)
-// On server-side during build, env vars may be undefined but Firebase won't be called
-const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
+let _app: FirebaseApp | null = null;
+let _auth: Auth | null = null;
+let _db: Firestore | null = null;
 
-export { app, auth, db };
-export default app;
+function getFirebaseApp(): FirebaseApp {
+  if (!_app) {
+    _app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  }
+  return _app;
+}
+
+export function getFirebaseAuth(): Auth {
+  if (!_auth) {
+    _auth = getAuth(getFirebaseApp());
+  }
+  return _auth;
+}
+
+export function getFirebaseDb(): Firestore {
+  if (!_db) {
+    _db = getFirestore(getFirebaseApp());
+  }
+  return _db;
+}
+
+// Legacy exports for backward compatibility - these are safe because
+// they are only accessed in 'use client' components at runtime
+export const auth = new Proxy({} as Auth, {
+  get(_target, prop) {
+    return (getFirebaseAuth() as any)[prop];
+  },
+});
+
+export const db = new Proxy({} as Firestore, {
+  get(_target, prop) {
+    return (getFirebaseDb() as any)[prop];
+  },
+});
+
+export default getFirebaseApp;
 
 export const getMessagingIfSupported = async () => {
-  if (typeof window === "undefined") return null;
-  const { getMessaging, isSupported } = await import("firebase/messaging");
+  if (typeof window === 'undefined') return null;
+  const { getMessaging, isSupported } = await import('firebase/messaging');
   const supported = await isSupported();
-  return supported ? getMessaging(app) : null;
+  return supported ? getMessaging(getFirebaseApp()) : null;
 };
