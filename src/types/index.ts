@@ -40,7 +40,7 @@ export interface Transaction {
   recurringId?: string;
   isSplit: boolean;
   splitAmount?: number;
-  month: string; // YYYY-MM format
+  month: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -62,10 +62,20 @@ export interface Budget {
   categoryId: string;
   categoryName: string;
   amount: number;
-  month: string; // YYYY-MM format
+  month: string;
   spent: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+export interface Notification {
+  id: string;
+  householdId: string;
+  userId: string;
+  type: 'budget_alert' | 'partner_invite' | 'transaction_added';
+  message: string;
+  isRead: boolean;
+  createdAt: Timestamp;
 }
 
 export interface RecurringTransaction {
@@ -83,31 +93,23 @@ export interface RecurringTransaction {
   createdAt: Timestamp;
 }
 
-export interface MonthlyBudgetCycle {
+export interface SavingsGoal {
   id: string;
   householdId: string;
-  month: string; // YYYY-MM
-  totalIncome: number;
-  totalExpense: number;
-  balance: number;
+  name: string;
+  targetAmount: number;
+  savedAmount: number;
+  icon: string;
+  color: string;
+  deadline?: Timestamp;
+  isCompleted: boolean;
   createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
-export interface Notification {
-  id: string;
-  householdId: string;
-  userId: string;
-  type: 'budget_alert' | 'partner_invite' | 'transaction_added';
-  message: string;
-  isRead: boolean;
-  createdAt: Timestamp;
-}
-
-export interface DashboardSummary {
-  totalIncome: number;
-  totalExpense: number;
+export interface MonthlyTrend {
+  month: string;
+  income: number;
+  expense: number;
   balance: number;
-  savingsRate: number;
-  budgetAlerts: Budget[];
-  recentTransactions: Transaction[];
 }
