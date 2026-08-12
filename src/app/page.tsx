@@ -1,13 +1,29 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+
 export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
+      }
+    }
+  }, [user, loading, router]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-br from-pink-50 to-indigo-50">
-      <h1 className="text-4xl font-bold text-indigo-700 mb-4">
-        Couple Budget App
-      </h1>
-      <p className="text-lg text-gray-600 max-w-xl text-center">
-        Track your shared monthly budget, split expenses, and stay on top of
-        your financial goals together. Sign in to get started.
-      </p>
-    </main>
+    <div className="flex min-h-screen items-center justify-center bg-gray-950">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <p className="text-gray-400 text-sm">Loading CouplesBudget...</p>
+      </div>
+    </div>
   );
 }
