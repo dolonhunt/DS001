@@ -76,7 +76,7 @@ export function subscribeToHousehold(
 // ===== TRANSACTIONS =====
 export async function addTransaction(
   householdId: string,
-  data: Omit<Transaction, 'id'>
+  data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>
 ) {
   const ref = await addDoc(collection(db, 'households', householdId, 'transactions'), {
     ...data,
